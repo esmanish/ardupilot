@@ -15,16 +15,24 @@ idf_build_process(esp32s3
     # although esptool_py does not generate static library,
     # processing the component is needed for flashing related
     # targets and file generation
-    COMPONENTS esp32s3
-               freertos
-               tcpip_adapter
+    COMPONENTS freertos
                fatfs
-               esp_adc_cal
                nvs_flash
                esptool_py
                app_update
+               esp_adc
+               esp_driver_mcpwm
+               driver
+               lwip
+               esp_wifi
+               esp_system
+               esp_rom
+               esp_timer
+
     SDKCONFIG ${CMAKE_CURRENT_LIST_DIR}/sdkconfig
-    BUILD_DIR ${CMAKE_BINARY_DIR})
+    SDKCONFIG_DEFAULTS ${CMAKE_CURRENT_LIST_DIR}/sdkconfig.defaults
+    BUILD_DIR ${CMAKE_BINARY_DIR}
+)
 
 set(elf_file ardupilot.elf)
 
@@ -34,35 +42,35 @@ if(NOT DEFINED ARDUPILOT_CMD)
     set(ARDUPILOT_CMD "none")
 endif()
 
-IF(${ARDUPILOT_CMD} STREQUAL "plane")
+message("WAF_BUILD_TARGET=${WAF_BUILD_TARGET}")
+
+string(REGEX MATCH "^(examples|tool)/" IS_EXAMPLE "${WAF_BUILD_TARGET}")
+
+if (IS_EXAMPLE)
+    string(REPLACE "/" ";" A ${WAF_BUILD_TARGET})
+    list(GET A 0 EXAMPLE_BASE)
+    list(GET A 1 EXAMPLE_NAME)
+    message("Building ${EXAMPLE_BASE} ${EXAMPLE_NAME}")
+    target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/${EXAMPLE_BASE}/lib${EXAMPLE_NAME}.a")
+    target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/libap.a")
+ELSEIF(${ARDUPILOT_CMD} STREQUAL "plane")
     message("Building for plane")
     target_link_libraries(${elf_file} "${ARDUPILOT_BIN}/libarduplane.a")
     target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/libArduPlane_libs.a")
-ENDIF()
-
-IF(${ARDUPILOT_CMD} STREQUAL "copter")
+ELSEIF(${ARDUPILOT_CMD} STREQUAL "copter")
     message("Building for copter")
     target_link_libraries(${elf_file} "${ARDUPILOT_BIN}/libarducopter.a")
     target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/libArduCopter_libs.a")
-ENDIF()
-
-IF(${ARDUPILOT_CMD} STREQUAL "rover")
+ELSEIF(${ARDUPILOT_CMD} STREQUAL "rover")
     message("Building for rover")
     target_link_libraries(${elf_file} "${ARDUPILOT_BIN}/libardurover.a")
     target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/libRover_libs.a")
-ENDIF()
-
-IF(${ARDUPILOT_CMD} STREQUAL "sub")
+ELSEIF(${ARDUPILOT_CMD} STREQUAL "sub")
     message("Building for submarine")
     target_link_libraries(${elf_file} "${ARDUPILOT_BIN}/libardusub.a")
     target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/libArduSub_libs.a")
 ENDIF()
 
-IF(${ARDUPILOT_CMD} STREQUAL "antennatracker")
-    message("Building AntennaTracker")
-    target_link_libraries(${elf_file} "${ARDUPILOT_BIN}/libantennatracker.a")
-    target_link_libraries(${elf_file} "${ARDUPILOT_LIB}/libAntennaTracker_libs.a")
-ENDIF()
 add_custom_target(showinc ALL
         COMMAND echo -e
         "$<TARGET_PROPERTY:${elf_file},INCLUDE_DIRECTORIES>"
@@ -93,14 +101,19 @@ add_custom_target(showinc ALL
 
 # Link the static libraries to the executable
 target_link_libraries(${elf_file}
-                idf::esp32s3
                 idf::freertos
                 idf::fatfs
-                idf::esp_adc_cal
                 idf::nvs_flash
                 idf::spi_flash
-                idf::tcpip_adapter
                 idf::app_update
+                idf::esp_adc
+                idf::esp_driver_mcpwm
+                idf::driver
+                idf::lwip
+                idf::esp_wifi
+                idf::esp_system
+                idf::esp_rom
+                idf::esp_timer
                 )
 
 # Attach additional targets to the executable file for flashing,

@@ -21,6 +21,10 @@
  *
  */
 
+#include "AP_AHRS_config.h"
+
+#if AP_AHRS_DCM_ENABLED
+
 #include "AP_AHRS_Backend.h"
 
 class AP_AHRS_DCM : public AP_AHRS_Backend {
@@ -37,8 +41,8 @@ public:
           _kp(kp),
           gps_gain(_gps_gain),
           beta(_beta),
-          _gps_use(gps_use),
-          _gps_minsats(gps_minsats)
+          _gps_minsats(gps_minsats),
+          _gps_use(gps_use)
     {
         _dcm_matrix.identity();
     }
@@ -60,9 +64,6 @@ public:
         return have_initial_yaw;
     }
 
-    // dead-reckoning support
-    virtual bool get_location(Location &loc) const override;
-
     // status reporting
     float           get_error_rp() const {
         return _error_rp;
@@ -76,6 +77,8 @@ public:
         wind = _wind;
         return true;
     }
+
+    void set_external_wind_estimate(float speed, float direction);
 
     // return an airspeed estimate if available. return true
     // if we have an estimate
@@ -132,6 +135,9 @@ public:
 
 private:
 
+    // dead-reckoning support
+    bool get_location(Location &loc) const;
+
     // settable parameters
     AP_Float &_kp_yaw;
     AP_Float &_kp;
@@ -168,7 +174,7 @@ private:
     void            reset(bool recover_eulers);
 
     // airspeed_ret: will always be filled-in by get_unconstrained_airspeed_estimate which fills in airspeed_ret in this order:
-    //               airspeed as filled-in by an enabled airsped sensor
+    //               airspeed as filled-in by an enabled airspeed sensor
     //               if no airspeed sensor: airspeed estimated using the GPS speed & wind_speed_estimation
     //               Or if none of the above, fills-in using the previous airspeed estimate
     // Return false: if we are using the previous airspeed estimate
@@ -262,8 +268,6 @@ private:
     // estimated wind in m/s
     Vector3f _wind;
 
-    float _imu1_weight{0.5f};
-
     // last time AHRS failed in milliseconds
     uint32_t _last_failure_ms;
 
@@ -282,4 +286,8 @@ private:
     // pre-calculated trig cache:
     float _sin_yaw;
     float _cos_yaw;
+
+    uint32_t last_log_ms;
 };
+
+#endif  // AP_AHRS_DCM_ENABLED

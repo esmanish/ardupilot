@@ -2,14 +2,6 @@
 
 #include <AP_HAL/AP_HAL_Boards.h>
 
-// Just so that it's completely clear...
-#define ENABLED                 1
-#define DISABLED                0
-
-// this avoids a very common config error
-#define ENABLE ENABLED
-#define DISABLE DISABLED
-
 // Frame types
 #define UNDEFINED_FRAME 0
 #define MULTICOPTER_FRAME 1
@@ -74,18 +66,6 @@ enum class AirMode {
     AIRMODE_NONE,
     AIRMODE_DISABLED,
     AIRMODE_ENABLED,
-};
-
-enum PayloadPlaceStateType {
-    PayloadPlaceStateType_FlyToLocation,
-    PayloadPlaceStateType_Descent_Start,
-    PayloadPlaceStateType_Descent,
-    PayloadPlaceStateType_Release,
-    PayloadPlaceStateType_Releasing,
-    PayloadPlaceStateType_Delay,
-    PayloadPlaceStateType_Ascent_Start,
-    PayloadPlaceStateType_Ascent,
-    PayloadPlaceStateType_Done,
 };
 
 // bit options for DEV_OPTIONS parameter
